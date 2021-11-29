@@ -1,6 +1,6 @@
 ---
 title: 'Data Exploration: Media'
-author: "Your name here"
+author: "Luke Kolar"
 date: "November 18, 2021"
 output:
   pdf_document: default
@@ -63,11 +63,55 @@ As usual, let's take a closer look at the data.
 # Part a
 **What is the unit of observation in the `misinfo.combined` dataset? How is it different from the data we usually see from surveys?**
 
+```{r}
+
+glimpse(misinfo.combined)
+
+```
+
+**ANSWER:** *The dataset uses a* `weight` *for each respondent, likely assigned so that the results come from a representative sample (i.e. a higher weight for an underrepresented group in the sample). This is new in the data we've worked with, and according to the codebook, YouGov assigned these weights. The dataset is also coded with 1s and 0s in a boolean fashion; this is familiar.*
+
+
 # Part b
 **Create a bar plot of the main outcome of interest, the number of questions that were correctly answered by respondents. You will need to do some manipulation of the data before you can make this plot. What does this distribution tell you about factual political knowledge in the electorate?**
 
+```{r}
+
+misinfo.combined %>% 
+  filter(!is.na(correct.answer)) %>% 
+  mutate(correct = ifelse(correct.answer == 0, "Incorrect", "Correct")) %>%
+  group_by(correct) %>% 
+  summarize(n = n()) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = correct, y = n)) + geom_col()
+
+```
+
+**ANSWER:** *This tells me that the electorate isn't well educated on the list of questions; it seems that respondents gave about three times more correct answers than incorrect answers, which isn't an impressive statistic (especially when you phrase it as "about 1 in 4 answers were incorrect").*
+
+
 # Part c
 **Split the bar plot you made in part b by treatment status - that is, by whether or not the respondent received an incentive for responding correctly. In addition, conduct a test of difference in means between the unincentivized and incentivized conditions. Did the incentives increase correct answers? If so, is it a meaningful increase?**
+
+```{r}
+
+misinfo.combined %>% 
+  filter(!is.na(correct.answer)) %>% 
+  mutate(correct = ifelse(correct.answer == 0, "Incorrect", "Correct")) %>%
+  mutate(treatment = ifelse(incentive == 0, "Control", "Treatment")) %>% 
+  group_by(correct, treatment) %>% 
+  summarize(n = n()) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = correct, y = n)) + geom_col(fill = "purple") + 
+    facet_wrap(~treatment) + labs(x = "", y = "Number Answered")
+
+difference_in_means(correct.answer ~ incentive, 
+                    data = misinfo.combined %>% 
+                      filter(!is.na(correct.answer)))
+
+```
+
+
 
 # Question 2
 
