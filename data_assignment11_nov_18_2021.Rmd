@@ -111,6 +111,7 @@ difference_in_means(correct.answer ~ incentive,
 
 ```
 
+**ANSWER:** *Both my bar graph and the difference in means test suggest that there is a statistically significant difference (p < 0.01) between the number of correct answers in the treatment group and the control group. However, this difference is not as significant (in the non-technical sense of the word) as one would expect.*
 
 
 # Question 2
@@ -123,19 +124,59 @@ While the data we just loaded has most of the main variables, it is missing the 
 
 load("combined.survey.demos.dea.RData")
 
+new_data <- full_join(combined.survey.demos, misinfo.combined, by = "caseid")
+
 ```
+
 
 ## Part b
 
 When merging (or joining; the two are used interchangeably) two datasets, it's always important to check that your merge worked correctly. One way to do that is to check that the number of rows in the new dataset is correct.  **Check that the number of rows in the new dataset is equal to the number of rows in the `x` dataset. If the number of rows differs, go back and check your merge.**
 
+```{r}
+
+nrow(new_data)
+nrow(misinfo.combined)
+nrow(combined.survey.demos)
+
+```
+
+
 ## Part c
 
 **Now check the number of columns in the resulting dataframe after the merge. Explain why the new merged dataset has that number of columns.**
 
+```{r}
+
+ncol(new_data)
+ncol(misinfo.combined)
+ncol(combined.survey.demos)
+
+```
+
+**ANSWER:** *The new dataset has every column in the two datasets from which it was joined, with the* `caseid` *column "overlapping" in the two.*
+
+
 # Question 3
 
 Now that we've merged in the data, let's see if some people are better at answering these factual questions than others. Choose one or more demographic variables that you think might influence correctness on the misinformation items and formulate a hypothesis about how they will be related. You can also consider whether some people will answer some types of questions more accurately than others (e.g. economic vs. social/cultural issues). Perform whatever analyses you think are appropriate to investigate your hypothesized relationship.
+
+```{r, warning = F, message = F}
+
+new_new_data <- new_data %>% 
+  group_by(caseid) %>% 
+  filter(!is.na(correct.answer)) %>% 
+  summarize(n_correct = sum(correct.answer)) %>% 
+  ungroup() %>% 
+  full_join(., combined.survey.demos, by = "caseid")
+
+mod = lm(n_correct ~ college + age, 
+         data = new_new_data)
+stargazer(mod, type = "text")
+
+```
+
+**ANSWER:** *I modified the data so I could use the number of correct answers as my discrete dependent variable. I hypothesized that college education would have a significant positive effect on the number of correct answers and age would have a minor positive effect. I was correct about college education - college educated respondents can be expected to answer 0.47 more questions correctly, on average, at the p < 0.01 significance level. Age, however, has the opposite effect. At the p < 0.05 significance level, each additional year per respondent predicts 0.003 fewer questions correctly.*
 
 
 # Question 4
